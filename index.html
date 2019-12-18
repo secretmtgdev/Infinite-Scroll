@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            .row {
+                height: 500px;
+            }
+
+            [data-id="1"] {
+                background-color: red;
+            }
+            
+            [data-id="2"] {
+                background-color: green;
+            }
+            
+            [data-id="3"] {
+                background-color: blue;
+            }
+            
+            [data-id="4"] {
+                background-color: yellow;
+            }
+        </style>
+    </head>
+    <body>
+        <main id="main">
+
+        </main>
+    </body>
+    <script>
+        (function() {
+            var queue = [];
+
+            if(document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setup);
+            } else {
+                setup();
+            }
+
+            function setup() {
+                window.addEventListener('scroll', () => {
+                    checkInView();
+                });
+                setFour();
+                checkInView('firstIteration');
+            }
+
+            /** Sets up the four original rows */
+            function setFour() {
+                for(let i = 0; i < 4; i++) {
+                    let row = document.createElement('div');
+                    row.className = 'row';
+                    row.dataset.id = i + 1;
+                    main.appendChild(row);
+                }
+            }
+
+            /** Checks if the elements are in view or not and adds all elements to the queue */
+            function checkInView(mark = null) {
+                if(mark) {
+                    let rows = document.querySelectorAll('.row');
+                    for(let i =0; i < rows.length; i++) {
+                        let viewable = inView(rows[i]);
+                        queue.push({
+                            row: rows[i].dataset.id,
+                            inView: viewable
+                        })
+                    }
+                    console.log(queue);
+                } else {
+                    let tmp = queue.shift();
+                    let node = document.querySelector(`[data-id="${tmp.row}"]`);
+                    let viewable = inView(node);
+                    if(viewable !== tmp.inView) {
+                        // shift
+                        queue.push(tmp);
+                        main.appendChild(node.cloneNode(true));
+                        node.remove();
+                        updateViews();
+                    } else {
+                        queue.unshift(tmp);
+                    }
+                    console.log(queue);
+                }
+            }
+
+            function updateViews() {
+                for(let i = 0; i < queue.length; i++) {
+                    let t = queue.shift();
+                    t.inView = inView(document.querySelector(`[data-id="${t.row}"]`));
+                    queue.push(t)
+                }
+            }
+
+            /** Checks to see if an element is visible in the current viewport */
+            function inView(element) {
+                let bound = element.getBoundingClientRect();
+                return bound.bottom < window.innerHeight && bound.bottom > 0 || bound.top < window.innerHeight && bound.top > 0;
+            }
+        })();
+    </script>
+</html>
